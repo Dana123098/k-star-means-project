@@ -1,11 +1,18 @@
 import random
 import math
 
+
+random.seed(42)
+
 def dist(p, q):
     return sum((pi - qi) ** 2 for pi, qi in zip(p, q))
 
+
 def center(points):
+    if not points:
+        return None
     return [sum(coords) / len(points) for coords in zip(*points)]
+
 
 def assign(points, centroids):
     assignments = []
@@ -14,7 +21,18 @@ def assign(points, centroids):
         assignments.append(dists.index(min(dists)))
     return assignments
 
+
+def compute_sse(clusters, centroids):
+    sse = 0
+    for i, cluster in enumerate(clusters):
+        c = centroids[i]
+        for p in cluster:
+            sse += dist(p, c)
+    return sse
+
+
 def kmeans(points, k, max_iter=100, eps=1e-4):
+    random.seed(42)
     centroids = random.sample(points, k)
 
     for _ in range(max_iter):
@@ -25,23 +43,18 @@ def kmeans(points, k, max_iter=100, eps=1e-4):
             clusters[assignments[i]].append(p)
 
         new_centroids = []
-        for i, cluster in enumerate(clusters):
+        for cluster in clusters:
             if cluster:
                 new_centroids.append(center(cluster))
             else:
+                # если кластер пустой → случайная точка
                 new_centroids.append(random.choice(points))
 
-        shift = max(dist(c1, c2) for c1, c2 in zip(centroids, new_centroids))
+        # проверка сходимости
+        shift = max(dist(c, nc) for c, nc in zip(centroids, new_centroids))
         if shift < eps:
             break
 
         centroids = new_centroids
 
-    return clusters, centroids
-
-def compute_sse(clusters, centroids):
-    sse = 0
-    for i, cluster in enumerate(clusters):
-        for p in cluster:
-            sse += dist(p, centroids[i])
-    return sse
+    return clusters, centroids, assignments

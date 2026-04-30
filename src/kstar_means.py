@@ -1,62 +1,45 @@
-from kmeans import kmeans, compute_sse
+from src.kmeans import kmeans, compute_sse
+from src.mdl import calculate_mdl
 from sklearn.metrics import silhouette_score
 
 
-def kstar_means(points, k_min=2, k_max=10, method="silhouette"):
+def kstar_means(points, k_min=1, k_max=10):
     """
-    Автоматический выбор числа кластеров k.
-
-    parameters:
-        points - список точек [[x, y], ...]
-        k_min - минимальное число кластеров
-        k_max - максимальное число кластеров
-        method - "silhouette" или "sse"
-
-    returns:
-        best_clusters
-        best_centroids
-        best_k
-        history (список результатов)
+    K*-Means with MDL-based model selection.
+    The best k is selected by minimizing MDL.
     """
 
-    best_score = None
+    best_mdl = float("inf")
     best_clusters = None
     best_centroids = None
+    best_labels = None
     best_k = None
 
     history = []
 
     for k in range(k_min, k_max + 1):
-        clusters, centroids = kmeans(points, k)
-
-        # превращаем кластеры в labels (нужно для silhouette)
-        labels = []
-        for i, cluster in enumerate(clusters):
-            for _ in cluster:
-                labels.append(i)
+        clusters, centroids, labels = kmeans(points, k)
 
         sse = compute_sse(clusters, centroids)
+        mdl = calculate_mdl(points, centroids, sse)
 
-        if method == "silhouette":
-            # silhouette требует минимум 2 кластера
-            if len(set(labels)) > 1:
-                score = silhouette_score(points, labels)
-            else:
-                score = -1
+        if k > 1 and len(set(labels)) > 1:
+            silhouette = silhouette_score(points, labels)
         else:
-            # если используем SSE → хотим МЕНЬШЕ
-            score = -sse
+            silhouette = None
 
         history.append({
             "k": k,
             "sse": sse,
-            "score": score
+            "mdl": mdl,
+            "silhouette": silhouette
         })
 
-        if best_score is None or score > best_score:
-            best_score = score
+        if mdl < best_mdl:
+            best_mdl = mdl
             best_clusters = clusters
             best_centroids = centroids
+            best_labels = labels
             best_k = k
 
-    return best_clusters, best_centroids, best_k, history
+    return best_clusters, best_centroids, best_labels, best_k, history
