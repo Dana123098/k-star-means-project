@@ -68,7 +68,8 @@ k-star-means-project/
 │   └── plots.py           # visualization
 │
 ├── experiments/
-│   └── run_synthetic.py   # experiment script
+│   ├── run_synthetic.py   # main experiment
+│   └── compare_methods.py # comparison experiment
 │
 ├── results/               # generated plots and CSV
 │
@@ -81,7 +82,7 @@ k-star-means-project/
 
 ## Installation
 
-Create environment and install dependencies:
+Install all required dependencies:
 
 ```bash
 pip install -r requirements.txt
@@ -91,19 +92,49 @@ pip install -r requirements.txt
 
 ## Running the project
 
-Run the experiment:
+Run the main experiment:
 
 ```bash
 python experiments/run_synthetic.py
 ```
 
-The script will:
+This script will:
 
-* generate synthetic data
-* run K-Means for different k
-* compute SSE, silhouette and MDL
-* select optimal k using MDL
+* generate a synthetic dataset
+* run K-Means for different values of k
+* compute SSE, silhouette score and MDL
+* automatically select the best k using MDL
 * save results and plots
+
+---
+
+## Output
+
+After running the script, the following files will be created in the `results/` directory:
+
+* `synthetic_results.csv` – table with k, SSE, silhouette and MDL
+* `sse_vs_k.png` – SSE plot
+* `silhouette_vs_k.png` – silhouette plot
+* `mdl_vs_k.png` – MDL plot
+* `clusters_kstar.png` – final clustering visualization
+
+---
+
+## Method comparison
+
+To compare different methods of selecting k, run:
+
+```bash
+python experiments/compare_methods.py
+```
+
+This will generate:
+
+* `method_comparison.csv` – comparison of:
+
+  * manual k
+  * silhouette-based selection
+  * MDL-based K*-Means
 
 ---
 
@@ -116,14 +147,6 @@ Example result:
 ```text
 Best k: 4
 ```
-
-Generated outputs:
-
-* SSE vs k plot
-* Silhouette vs k plot
-* MDL vs k plot
-* Final clustering visualization
-* CSV file with all results
 
 ---
 

@@ -1,0 +1,4 @@
+method,selected_k,criterion,sse,silhouette,mdl
+Manual k-means,4,Given manually,948.8903433376539,,
+Silhouette selection,4,Maximum silhouette,948.8903433376539,0.7911042588289479,690.4020086018456
+MDL K*-Means,4,Minimum MDL,948.8903433376539,0.7911042588289479,690.4020086018456
