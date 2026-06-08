@@ -1,0 +1,4 @@
+scenario,true_k,detected_k,final_sse,final_mdl,runtime_sec,iterations
+close,4,10,2751.38,5002.4,0.1224,23
+medium,4,4,1366.4,3264.95,0.0317,10
+far,4,4,237.22,2700.36,0.0255,9

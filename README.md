@@ -1,182 +1,108 @@
-# K*-Means Clustering Project
+# Zespół
 
-## Overview
+* Daiana Henina
+* Aneliia Henina
 
-This project implements the **K*-Means clustering algorithm** based on the paper:
+# Projekt
 
-**“K*-Means: A Parameter-free Clustering Algorithm”**
-by Louis Mahon and Mirella Lapata.
+**K*-Means: Parameter-free Clustering Algorithm**
 
-The goal of this project is to automatically determine the optimal number of clusters without manually specifying the parameter `k`.
+# Opis
 
----
+Projekt stanowi autorską implementację adaptacyjnego algorytmu klasteryzacji K*-Means, opartego na pracy naukowej: Louis Mahon, Mirella Lapata — „K*-Means: A Parameter-free Clustering Algorithm” (maj 2025).
 
-## Motivation
+Głównym celem jest automatyczne i dynamiczne wyznaczanie optymalnej liczby klastrów (k) podczas jednego przebiegu algorytmu, bez konieczności ręcznego podawania tego parametru przez użytkownika. Proces optymalizacji opiera się na kryterium teorii informacji MDL (Minimum Description Length), wyważającym dokładność podziału (SSE) oraz złożoność modelu (k). Algorytm startuje od struktury k=1 i adaptacyjnie modyfikuje przestrzeń za pomocą operacji podziału klastrów (Maybe-Split) oraz ich fuzji (Maybe-Merge).
 
-The classical **K-Means** algorithm requires the number of clusters `k` to be defined in advance.
+# Idea algorytmu K*-Means
 
-In real-world scenarios, this value is often unknown.
-
-Standard approaches such as:
-
-* Elbow method
-* Silhouette score
-
-require human interpretation or are not fully reliable.
-
----
-
-## Idea of K*-Means
-
-K*-Means solves this problem using the **Minimum Description Length (MDL)** principle.
-
-The algorithm selects the number of clusters that minimizes the total description cost:
-
-```text
+Algorytm K*-Means rozwiązuje problem optymalnego doboru grup przy użyciu zasady Minimum Description Length (MDL). Model wybiera taką liczbę klastrów, która minimalizuje całkowity koszt opisu danych:
 MDL = L_data + L_model
-```
 
-In this project, the following formula is used:
+W projekcie zastosowano następujący matematyczny wzór jawny:
+MDL = n * d * log2(SSE / (n * d)) + k * d * log2(n) + n * log2(k)
 
-```text
-MDL = n*d*log(SSE/(n*d)) + k*d*log(n) + n*log(k)
-```
+Gdzie:
+* n – liczba punktów danych
+* d – liczba cech (wymiarowość)
+* k – bieżąca liczba klastrów
+* SSE – suma kwadratów błędów (Sum of Squared Errors)
 
-Where:
+Główną ideą jest znalezienie idealnej równowagi pomiędzy:
+* jakością dopasowania danych (niskie SSE)
+* złożonością strukturalną modelu (małe k)
 
-* `n` – number of data points
-* `d` – number of features
-* `k` – number of clusters
-* `SSE` – sum of squared errors
+# Struktura projektu
 
-The idea is to balance:
-
-* data fitting quality (low SSE)
-* model complexity (small k)
-
----
-
-## Project Structure
-
-```text
 k-star-means-project/
 │
 ├── src/
-│   ├── kmeans.py          # implementation of K-Means
-│   ├── kstar_means.py     # K*-Means with MDL
-│   ├── mdl.py             # MDL cost function
-│   └── plots.py           # visualization
+│   ├── kmeans.py          # Klasyczna implementacja bazowa K-Means
+│   ├── kstar_means.py     # Główna pętla adaptacyjna K*-Means z operacjami split/merge
+│   ├── mdl.py             # Matematyczne obliczanie funkcji kosztu MDL oraz SSE
+│   └── plots.py           # Skrypty do generowania i wizualizacji wykresów
 │
 ├── experiments/
-│   ├── run_synthetic.py   # main experiment
-│   └── compare_methods.py # comparison experiment
+│   ├── run_synthetic.py   # Główny eksperyment na wieloformatowych danych syntetycznych
+│   └── compare_methods.py # Eksperyment porównujący K*-Means z innymi podejściami
 │
-├── results/               # generated plots and CSV
+├── results/               # Folder zawierający automatycznie generowane wykresy i pliki CSV
 │
-├── EXAMPLE.md             # detailed experiment analysis
-├── README.md              # project description
-└── requirements.txt       # dependencies
-```
+├── EXAMPLE.md             # Dokładna, szczegółowa analiza przeprowadzonych eksperymentów
+├── README.md              # Główny plik z opisem technicznym projektu
+└── requirements.txt       # Definicje zależności i wymaganych bibliotek
 
----
+# Sposób uruchomienia
 
-## Installation
+Wymagania:
+* Python 3.11+
+* virtualenv / venv
 
-Install all required dependencies:
+Zależności:
+* numpy
+* pandas
+* matplotlib
+* scikit-learn
 
-```bash
+Instalacja i uruchomienie:
+
+# 1. Stworzenie i aktywacja środowiska wirtualnego
+python3 -m venv .venv
+source .venv/bin/activate
+
+# 2. Instalacja wymaganych bibliotek
 pip install -r requirements.txt
-```
 
----
+# 3. Uruchomienie głównego eksperymentu (dane syntetyczne)
+python3 experiments/run_synthetic.py
 
-## Running the project
+Skrypt ten automatycznie wykona następujące kroki:
+* wygeneruje syntetyczne zbiory danych (scenariusze FAR, MEDIUM, CLOSE)
+* uruchomi adaptacyjny proces K*-Means dla każdego przypadku
+* obliczy wartości SSE, Silhouette Score oraz MDL na przestrzeni iteracji
+* automatycznie dobierze najlepszą strukturę klastrów za pomocą kryterium MDL
+* zapisze wyniki liczbowe oraz gotowe wykresy w folderze wynikowym
 
-Run the main experiment:
+# Pliki wynikowe (Output)
 
-```bash
-python experiments/run_synthetic.py
-```
+Po uruchomieniu głównego skryptu, w katalogu results/ zostaną automatycznie utworzone następujące pliki:
+* synthetic_results.csv – tabela zbiorcza zawierająca parametry k, SSE, Silhouette oraz MDL
+* sse_vs_iteration.png – wykres spadku błędu SSE w kolejnych krokach optymalizacji
+* mdl_vs_iteration.png – wykres zmian całkowitego kosztu informacyjnego MDL
+* k_vs_iteration.png – wykres prezentujący dynamiczną zmianę liczby klastrów (linie split/merge)
+* clusters_kstar.png – ostateczna wizualizacja graficzna podziału przestrzeni przez algorytm
 
-This script will:
+# Porównanie metod (Method comparison)
 
-* generate a synthetic dataset
-* run K-Means for different values of k
-* compute SSE, silhouette score and MDL
-* automatically select the best k using MDL
-* save results and plots
+Aby dokonać ewaluacji i porównać nasz algorytm z tradycyjnymi technikami doboru k, należy uruchomić skrypt:
+python3 experiments/compare_methods.py
 
----
+Spowoduje to wygenerowanie pliku zbiorczego:
+* method_comparison.csv – zestawienie wydajnościowe porównujące:
+  - manualny dobór parametru k (K-Means)
+  - selekcję opartą o Silhouette Score
+  - w pełni automatyczny algorytm K*-Means oparty na MDL
 
-## Output
+# Dodatkowe informacje
 
-After running the script, the following files will be created in the `results/` directory:
-
-* `synthetic_results.csv` – table with k, SSE, silhouette and MDL
-* `sse_vs_k.png` – SSE plot
-* `silhouette_vs_k.png` – silhouette plot
-* `mdl_vs_k.png` – MDL plot
-* `clusters_kstar.png` – final clustering visualization
-
----
-
-## Method comparison
-
-To compare different methods of selecting k, run:
-
-```bash
-python experiments/compare_methods.py
-```
-
-This will generate:
-
-* `method_comparison.csv` – comparison of:
-
-  * manual k
-  * silhouette-based selection
-  * MDL-based K*-Means
-
----
-
-## Results
-
-The algorithm automatically finds the optimal number of clusters.
-
-Example result:
-
-```text
-Best k: 4
-```
-
----
-
-## Comparison of methods
-
-| Method     | Requires manual choice | Objective                    |
-| ---------- | ---------------------- | ---------------------------- |
-| SSE        | Yes                    | Minimize error               |
-| Silhouette | Yes                    | Maximize separation          |
-| **MDL**    | No                     | Balance error and complexity |
-
-MDL is the main criterion used in this project.
-
----
-
-## Conclusion
-
-The implemented K*-Means algorithm successfully determines the correct number of clusters without manual tuning.
-
-The MDL principle provides a more robust and theoretically grounded alternative to classical methods.
-
----
-
-## Authors
-
-* Student 1 – Algorithm implementation
-* Student 2 – Analysis and visualization
-
----
-
-## Notes
-
-This project was created as part of a university assignment in machine learning.
+Projekt bazuje bezpośrednio na matematycznych założeniach i algorytmice opisanej w artykule naukowym:
+* Mahon, L., & Lapata, M. (2025). K*-Means: A Parameter-free Clustering Algorithm. arXiv preprint arXiv:2505.11904.

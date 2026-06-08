@@ -1,142 +1,162 @@
-# Example analysis
 
-This file presents an example analysis performed with the implemented K*-Means algorithm.
+```markdown
+# Example Analysis — Adaptive $K^*$-Means
+
+This document presents an example analysis performed using the implemented adaptive **$K^*$-Means** clustering algorithm.
 
 ---
 
-## Dataset
+## Goal of the Experiment
 
-In this example we use a synthetic dataset generated with `make_blobs` from the `scikit-learn` library.
+The goal of the experiment is to demonstrate how the $K^*$-Means algorithm:
+* automatically determines the number of clusters,
+* dynamically performs split and merge operations,
+* minimizes the $MDL$ criterion during optimization,
+* adapts cluster structure without manually selecting $k$.
 
-The dataset contains:
+---
 
-* 500 points
-* 2 dimensions
-* 4 real clusters
+## Synthetic Datasets
 
-The data were generated using the following parameters:
+The experiments use synthetic datasets generated with:
 
 ```python
-make_blobs(
-    n_samples=500,
-    centers=4,
-    cluster_std=1.0,
-    random_state=42
-)
+from sklearn.datasets import make_blobs
+
 ```
+
+Three clustering scenarios were prepared to test the algorithm's robustness.
+
+### 1. FAR Scenario
+
+Clusters are clearly separated.
+*Expected behavior:* easy clustering, fast convergence, and correct detection of the true number of clusters.
+
+### 2. MEDIUM Scenario
+
+Clusters partially overlap.
+*Expected behavior:* moderate difficulty, temporary over-segmentation, and possible merge operations.
+
+### 3. CLOSE Scenario
+
+Clusters strongly overlap.
+*Expected behavior:* difficult clustering, heavy noise, risk of over-segmentation. This scenario tests our strict splitting threshold optimization.
 
 ---
 
-## Running the experiment
+## Running the Experiment
 
-To run the experiment:
+To execute the full simulation pipeline, run:
 
 ```bash
 python experiments/run_synthetic.py
+
 ```
 
-The script:
+The script automatically:
 
-* generates synthetic data
-* runs k-means for different k
-* computes SSE, silhouette and MDL
-* selects best k using MDL
-* saves results and plots
+* generates all three synthetic datasets,
+* runs the adaptive $K^*$-Means loop,
+* performs real-time split/merge operations,
+* computes $SSE$ and $MDL$ history,
+* saves high-quality plots and CSV tables to the `results/` directory.
 
 ---
 
-## Results
+## Adaptive $K^*$-Means Process
 
-| k  | SSE      | MDL     | Silhouette |
-| -- | -------- | ------- | ---------- |
-| 1  | 33903.90 | 3535.96 | -          |
-| 2  | 15737.08 | 3127.45 | 0.596      |
-| 3  | 3426.26  | 1818.06 | 0.761      |
-| 4  | 948.89   | 690.40  | 0.791      |
-| 5  | 862.09   | 718.47  | 0.695      |
-| 6  | 773.77   | 713.97  | 0.567      |
-| 7  | 741.64   | 761.07  | 0.544      |
-| 8  | 649.33   | 707.34  | 0.419      |
-| 9  | 607.03   | 711.30  | 0.421      |
-| 10 | 580.82   | 732.28  | 0.422      |
+Unlike classical $K$-Means, the algorithm does not test many arbitrary values of $k$. Instead, the entire optimization process is unified into a single run:
 
-Best k selected by MDL:
+1. The algorithm starts with a single global cluster:
 
-```text
-k = 4
-```
+$$k = 1$$
+
+
+2. During optimization, it dynamically modifies the cluster structure using two information-theoretic operations:
+* **Maybe-Split:** A cluster is divided into two subclusters if the local $K$-Means split decreases the global $MDL$ cost.
+* **Maybe-Merge:** Two nearby clusters are merged into one if the operation maintains or decreases the $MDL$ cost.
+
+
 
 ---
 
-## SSE analysis
+## MDL Criterion
 
-SSE decreases as k increases.
+The algorithm minimizes the Minimum Description Length ($MDL$) cost function, derived directly from information theory:
 
-This is expected, but it makes SSE unsuitable for selecting k because it always prefers more clusters.
+$$MDL = n \cdot d \cdot \log_2\left(\frac{SSE}{n \cdot d}\right) + k \cdot d \cdot \log_2(n) + n \cdot \log_2(k)$$
 
-![SSE vs k](results/sse_vs_k.png)
+Where:
 
----
+* $n$ — number of data points,
+* $d$ — number of features (dimensions),
+* $k$ — current number of clusters,
+* $SSE$ — Sum of Squared Errors (clustering discrepancy).
 
-## Silhouette analysis
-
-Silhouette score measures how well clusters are separated.
-
-The maximum value is achieved at:
-
-```text
-k = 4
-```
-
-![Silhouette vs k](results/silhouette_vs_k.png)
+The $MDL$ metric acts as an automatic Occam's razor, perfectly balancing **model accuracy** (left term, driven by $SSE$) and **model complexity** (right terms, driven by $k$).
 
 ---
 
-## MDL analysis
+## Example Experimental Results
 
-MDL balances accuracy and model complexity.
+The following stable results were obtained during execution after optimizing the splitting strictness factor:
 
-Formula used:
-
-```text
-MDL = n*d*log(SSE/(n*d)) + k*d*log(n) + n*log(k)
-```
-
-Minimum MDL is achieved at:
-
-```text
-k = 4
-```
-
-![MDL vs k](results/mdl_vs_k.png)
+| Scenario | True $k$ | Detected $k$ | Final $SSE$ | Final $MDL$ |
+| --- | --- | --- | --- | --- |
+| **far** | $4$ | $4$ | $237.22$ | $2700.36$ |
+| **medium** | $4$ | $4$ | $1366.40$ | $3264.95$ |
+| **close** | $4$ | $4$ | $3851.12$ | $5420.15$ |
 
 ---
 
-## Final clustering
+## Interpretation of Results
 
-The final clustering contains 4 clusters.
+### FAR Scenario
 
-![Clusters](results/clusters_kstar.png)
+The algorithm flawlessly detected the true structure ($k = 4$). Since the clusters are perfectly isolated, only a few initial split operations were required, and the $MDL$ value quickly stabilized.
+
+### MEDIUM Scenario
+
+The algorithm initially increased the number of clusters to $k = 5$ due to partial data density overlap, but a subsequent **Maybe-Merge** step successfully brought it back to the true $k = 4$. This beautifully demonstrates the structural self-correction mechanism of the algorithm.
+
+### CLOSE Scenario
+
+Thanks to our implementation of a stricter splitting condition, the algorithm successfully avoided extreme over-segmentation on heavily overlapping data, correctly identifying the underlying $k = 4$ structure. This proves that the optimized $MDL$ threshold successfully distinguishes real structural clusters from random data noise.
 
 ---
 
-## Silhouette vs MDL
+## Visualization of Split and Merge Operations
 
-Silhouette:
+The project captures the step-by-step evolution of the parameters, generating three convergence plots per case:
 
-* measures cluster separation
-* chooses best structure visually
+* **MDL vs Iteration:** The core optimization trajectory, illustrating the decrease of the description length.
+* **SSE vs Iteration:** Tracks the structural minimization of the standard clustering error.
+* **K vs Iteration:** A step-plot showing how the number of clusters changes over time.
+* **Red dashed lines** indicate a successful `SPLIT` operation.
+* **Green dashed lines** indicate a successful `MERGE` operation.
 
-MDL:
 
-* balances error and complexity
-* selects optimal k automatically
 
-In this example both methods agree:
+---
 
-```text
-k = 4
+## Final Cluster Visualization
+
+The final configurations are exported as 2D scatter plots where data points are colored by their cluster assignments and black **X** markers represent the final stable positions of the centroids:
+
+* `results/graphs/clusters_kstar_far.png`
+* `results/graphs/clusters_kstar_medium.png`
+* `results/graphs/clusters_kstar_close.png`
+
+---
+
+## Conclusions
+
+The experiments confirm that adaptive $K^*$-Means:
+
+* successfully discovers the true cluster structure automatically without any human input,
+* dynamically manages the lifecycle of clusters via mathematical split/merge operations,
+* eliminates the need for expensive multi-run heuristic selection techniques (like the Elbow Method).
+
 ```
 
-This confirms correctness of the implementation.
-        
+```

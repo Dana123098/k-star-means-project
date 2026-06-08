@@ -1,0 +1,2 @@
+dataset,true_k,detected_k,final_sse,final_mdl,runtime_sec,iterations
+Iris,3,2,152.35,1277.62,0.0123,6
