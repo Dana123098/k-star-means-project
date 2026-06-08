@@ -3,6 +3,8 @@
 * Daiana Henina
 * Aneliia Henina
 
+*Uwaga organizacyjna: Projekt został zrealizowany w całości wspólnie w trybie Pair Programming (programowanie parowe) przy użyciu jednego komputera. Z tego powodu historia zatwierdzeń (commits) na GitHubie odzwierciedla głównie jedno konto, jednak wkład merytoryczny i kodowy obu członków zespołu jest równy (50% / 50%).*
+
 # Projekt
 
 **K*-Means: Parameter-free Clustering Algorithm**
